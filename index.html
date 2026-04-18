@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Publishing System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #f1f5f9;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .required { color: #f43f5e; }
+        input, textarea, select {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #f1f5f9;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        textarea { resize: vertical; min-height: 150px; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+        .btn:hover:not(:disabled) { background: #4f46e5; }
+        .btn:disabled { background: #334155; cursor: not-allowed; }
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            font-size: 14px;
+        }
+        .alert-success {
+            background: #064e3b;
+            border: 1px solid #059669;
+            color: #6ee7b7;
+        }
+        .alert-error {
+            background: #4c0519;
+            border: 1px solid #e11d48;
+            color: #fda4af;
+        }
+        .loading { display: flex; align-items: center; gap: 8px; }
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid #ffffff40;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Article Publisher</h1>
+        <p class="subtitle">Submit your article for publishing and SEO processing</p>
+
+        <div class="form-group">
+            <label>Title <span class="required">*</span></label>
+            <input type="text" id="title" placeholder="Enter article title...">
+        </div>
+
+        <div class="form-group">
+            <label>Content <span class="required">*</span></label>
+            <textarea id="content" placeholder="Write your article content here..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="category" placeholder="e.g. Technology, Health, Finance...">
+        </div>
+
+        <div class="form-group">
+            <label>Author</label>
+            <input type="text" id="author" placeholder="Author name...">
+        </div>
+
+        <div class="form-group">
+            <label>Publish Date</label>
+            <input type="datetime-local" id="published_at">
+        </div>
+
+        <div class="form-group">
+            <label>Tags <span style="color:#94a3b8;font-weight:400">(comma separated)</span></label>
+            <input type="text" id="tags" placeholder="e.g. AI, technology, future...">
+        </div>
+
+        <button class="btn" id="submitBtn" onclick="submitArticle()">
+            🚀 Publish Article
+        </button>
+
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = "http://localhost:5678/webhook/ingest-article";
+
+        async function submitArticle() {
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+
+            // Validation
+            if (!title) { showError("Title is required!"); return; }
+            if (!content) { showError("Content is required!"); return; }
+
+            const payload = {
+                title,
+                content,
+                category: document.getElementById('category').value.trim(),
+                author: document.getElementById('author').value.trim(),
+                published_at: document.getElementById('published_at').value,
+                tags: document.getElementById('tags').value.trim()
+            };
+
+            // Disable button and show loading
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Submitting...</div>';
+            hideAlerts();
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess(`✅ Article published successfully!<br><strong>Article ID:</strong> ${data.article_id || 'Generated'}`);
+                    clearForm();
+                } else {
+                    showError(data.message || "Something went wrong. Please try again.");
+                }
+            } catch (err) {
+                showError("Could not connect to server. Please check your connection.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🚀 Publish Article';
+            }
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successAlert');
+            el.innerHTML = msg;
+            el.style.display = 'block';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorAlert');
+            el.innerHTML = msg;
+            el.style.display = 'block';
+        }
+
+        function hideAlerts() {
+            document.getElementById('successAlert').style.display = 'none';
+            document.getElementById('errorAlert').style.display = 'none';
+        }
+
+        function clearForm() {
+            ['title', 'content', 'category', 'author', 'published_at', 'tags']
+                .forEach(id => document.getElementById(id).value = '');
+        }
+    </script>
+</body>
+</html>

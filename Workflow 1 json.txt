@@ -1,0 +1,224 @@
+Workflow 1 
+
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingest-article",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "26c8fb5c-a86e-4259-bc45-9a752618bd53",
+      "name": "Webhook",
+      "webhookId": "43b54ca2-43e6-47e7-b809-891b8c3bc326"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZyeKqQVFjnF2ocSGwhVbPYWGBeQ6yr-RwvTPTAe_2d4",
+          "mode": "list",
+          "cachedResultName": "Article_SEO_Automation_Dotmappers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZyeKqQVFjnF2ocSGwhVbPYWGBeQ6yr-RwvTPTAe_2d4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZyeKqQVFjnF2ocSGwhVbPYWGBeQ6yr-RwvTPTAe_2d4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "article_id",
+              "displayName": "article_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "author",
+              "displayName": "author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tags_csv",
+              "displayName": "tags_csv",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "raw_payload",
+              "displayName": "raw_payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "seo_status",
+              "displayName": "seo_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "seo_requested_at",
+              "displayName": "seo_requested_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "seo_processed_at",
+              "displayName": "seo_processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "seo_error",
+              "displayName": "seo_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "94a9970b-4009-44bb-8074-bca942c6a722",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k5pndwkHL2Re5QQR",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst body = item.body || item;\n\nif (!body.title || !body.title.trim()) {\n  throw new Error(\"Validation Error: title is required\");\n}\nif (!body.content || !body.content.trim()) {\n  throw new Error(\"Validation Error: content is required\");\n}\n\nconst tags = Array.isArray(body.tags) \n  ? body.tags.join(',') \n  : (body.tags || '');\n\nconst articleId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n  const r = Math.random() * 16 | 0;\n  return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);\n});\n\nconst createdAt = new Date().toISOString();\n\nreturn [{\n  json: {\n    article_id: articleId,\n    created_at: createdAt,\n    title: body.title.trim(),\n    content: body.content.trim(),\n    category: (body.category || '').trim(),\n    author: (body.author || '').trim(),\n    published_at: (body.published_at || '').trim(),\n    tags_csv: tags,\n    raw_payload: JSON.stringify(body),\n    seo_status: \"pending\",\n    seo_requested_at: createdAt,\n    seo_processed_at: \"\",\n    seo_error: \"\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "fd49ff32-37da-4414-9a52-74332d8f6a03",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4f03b2c8d279a7e6c4765eeacdd3bc85c8ee82720fb787b19ed500058944b47a"
+  }
+}
